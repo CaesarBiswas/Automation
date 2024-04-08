@@ -1,0 +1,25 @@
+- hosts: all
+  become: yes
+
+  tasks:
+
+    - name: Read /etc/passwd file
+      slurp:
+        src: /etc/passwd
+      register: passwd_file
+
+    - name: Remove lines starting with '#'
+      lineinfile:
+        path: /etc/passwd
+        regexp: '^#.*'
+        state: absent
+        backrefs: yes
+      register: passwd_modified
+
+
+    - name: Backup /etc/passwd
+      copy:
+        content: "{{ passwd_file.content | b64decode }}"
+        dest: /etc/passwd.bak
+        mode: 0644
+      when: passwd_modified.changed
